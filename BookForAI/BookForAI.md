@@ -559,9 +559,76 @@ $$
 
 ### <b style="color:blue">6. 输出层</b>
 
+**问题**：为什么给定同样的输入，模型会有不同的输出内容。
+
++ 训练阶段，损失值是如何计算的？
++ 推理阶段，如何选出下一个词？
 
 
 
+ <h4 style="color:purple">1.损失值计算</h4>
+
+![image-20251215111625080](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251215111625080.png)
+
+**计算损失值步骤如下**
+
+1. 输入内容$w_1-w_{n-1}$，例：<b style="color:red">“天王盖地虎宝塔镇河妖”</b>
+2. 取出内容$w_2 - w_n$作为正确的标签，例：<b style="color:red">“盖地虎宝塔镇河妖[EOS]”</b>
+3. 模型根据输入内容预测内容 <b style="color:red">$\hat{w_2} - \hat{w_n}$</b>
+4. 模型输出的概率分布表中，把 $-log(正确词的概率)$，作为当前的损失：<b style="color:red;">比如第二个词正确答案是地虎，然后模型输出的预测分布表中给 地虎 的概率是0.42，那么这次损失就是 -log(0.42)</b>
+5. 损失加起来求均值就是本次的损失值。
+
+![image-20251215113251585](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251215113251585.png)
+
+1. **Transformer 主干网络**（多层attention + FFN）
+
+   $\to$接受输入词元$\to$输出**隐藏状态矩阵**
+   $$
+   H \in R^{L \times d_{model}}
+   $$
+
+   + $L$：序列长度
+   + $d_{model}$：模型维度
+
+2. **输出层** $\to$ 线性变换（全连接层，无激活函数）
+   $$
+   logits = H \cdot W_{out} + b
+   $$
+
+   + $W_{out} \in R^{d_{model}\times V}$
+   + $V$：词表大小
+   + $b\in R^{V}$是偏置（有时省略）
+   + 结果：$logits \in R^{L \times V}$
+
+3. **转换为概率分布**（仅用于理解，训练时通常跳过） $\to$ 对logits每一行用 **softmax**
+   $$
+   P_{i,j} = \frac{exp(logits_{i,j})}{\sum^{V}_{k=1}exp(logits_{i,j})}
+   $$
+   
+
+
+
+ <h4 style="color:purple">2.推理阶段选出候选词</h4>
+
++ 如果只选概率最高的词最为输出会导致
+  + 相同的模型只会给出相同的输出。
+  + 局部贪心不一定最优解，每一个词选最好的不一定完整句子是最好的。
++ 因此可以按概率来抽样，这样每一个词都有机会被选中，保持当前最好词依旧最大概率被抽中，其他词也有自己的概率被抽中。这样就兼顾了多样性和准确性。
++ 如果想进一步增加模型输出的多样性，可以对logits除以一个大于1的数（称为tempreture），这样子softmax之后的分布也会更均匀
+
+![image-20251215161845807](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251215161845807.png)
+
+但是上述的做法还是有些不足，某些词的概率实在太小，没必要进入选择的范围，可以有如下解决方法：
+
+1. <b style="color:red">TopK</b>：只选择前K个作为候选对象。
+2. <b style="color:red">TopP</b>：只选择累计概率和大于P的作为候选对象。
+3. <b style="color:red">MinP</b>：概率低于P的选项不作为候选对象。
+
+
+
+### <b style="color:blue">7. 参数计算图</b>
+
+![image-20251215162749778](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251215162749778.png)
 
 
 
@@ -1014,3 +1081,162 @@ llamafactory-cli webui
 + 在⻚⾯上配置导出路径，导出即
 
 ![image-20251209152855427](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209152855427.png)
+
+
+
+
+
+
+
+
+
+## 基于LLM模型实现文本分类
+
+<b style="color:red">from transformers import AutoTokenizer, AutoModel</b>包的介绍
+
++ `AutoTokenizer`：这是一个自动化的 Tokenizer（分词器），可以根据指定的预训练模型自动选择并加载相应的分词器。分词器用于将文本切分为模型能够理解的 token（令牌）序列。
++ `AutoModel`：这是一个自动化的模型加载器，可以根据指定的预训练模型名称，加载相应的模型架构和权重。
+
+<h4 style="color:purple">1.熟悉 AutoTokenizer, AutoModel 两个包的使用</h4>
+
+~~~python
+from transformers import AutoTokenizer, AutoModel
+# 指定一个训练模型的名字，以bert为例
+model_name = 'bert-base-uncased'
+
+# 加载预训练模型的分词器
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+# 加载预训练模型
+model = AutoModel.from_pretrained(model_name)
+
+# 对一段文本进行编码
+input_text = "HelloWorld"
+
+# 使用分词器进行编码文本
+# return_tensor='pt' 代表就是pytorch数据
+encoder_input = tokenizer.encode(input_text,return_tensors='pt')
+
+print(encoder_input)
+
+# 将嵌入向量给模型进行训练
+output = model(encoder_input)
+
+# 接收模型传递过来的信息
+print(output.last_hidden_state)
+~~~
+
+
+
+<h4 style="color:purple">2.利用 LLM 进行文本分类任务</h4>
+
++ 对于大模型来讲，prompt 的设计非常重要，一个明确的 prompt 能够帮助我们更好从大模型中获得我们想要的结果
++ 在该任务的 prompt 设计中，主要考虑 2 点：需要向模型解释什么叫做 [文本分类任务] 需要让模型按照我们指定的格式输出
++ 为了让模型知道 [文本分类]，我们借用 Incontext Learning 的方式，先给模型展示几个正确的例子：
+  + User 代表我们输入给模型的句子
+  + Bot 代表模拟模型的回复内容
+  + 上述例子中 Bot 的部分也是由人工输入，其目的是希望看到在看到类似 User 中的句子时，模型应当作出类似Bot的回答
+
+```cmd
+>>> User: "今日，股市经了一轮震荡，受到宏观经济数据和全球贸易紧张局势的影响。投资者密切关注美联储可能的政策调整，以适应市场的不确定性。" 是['新闻报道', '公司公告', '财务公告'分析师报告']里的什么类别？
+>>> Bot: 新闻报道
+>>> User: "本公司年度财务报告显示，去年公司实现了稳步增长的盈利，同时资产表呈现强劲的状况。经济环境的稳定和管理层的有效战略执行为公司的健康发展奠定了基础。"是['新闻报道', '公司公告', '财务公告'分析师报告']里的什么类别？
+>>> Bot: 财务报告
+```
+
+<b style="color:red">具体代码实现如下</b>：
+
+~~~python
+from rich import print
+from rich.console import Console
+from transformers import AutoTokenizer, AutoModel
+
+# 提供所有类别以及每个类别下的样例
+class_examples = {
+    '新闻报道': '今日，股市经历了一轮震荡，受到宏观经济数据和全球贸易紧张局势的影响。投资者密切关注美联储可能的政策调整，以适应市场的不确定性。',
+    '财务报告': '本公司年度财务报告显示，去年公司实现了稳步增长的盈利，同时资产负债表呈现强劲的状况。经济环境的稳定和管理层的有效战略执行为公司的',
+    '公司公告': '本公司高兴地宣布成功完成最新一轮并购交易，收购了一家在人工智能领域领先的公司。这一战略举措将有助于扩大我们的业务领域，提高市场竞',
+    '分析师报告': '最新的行业分析报告指出，科技公司的创新将成为未来增长的主要推动力。云计算、人工智能和数字化转型被认为是引领行业发展的关键因素，'
+}
+
+# 定义一个init_prompts 函数
+def init_prompts():
+    class_list = list(class_examples.keys())
+    pre_history = [
+        {
+            "role": "user",
+            "content": f'你是一个严格的文本分类器，必须从以下类别中选择唯一一个作为输出: {class_list} 。不要解释，不要添加标点，不要修改类别名称，仅输出类别名称。"'
+        },
+        {
+            "role": "assistant",
+            "content": '好的。'
+        }
+    ]
+
+    for _type, example in class_examples.items():
+        pre_history.append({
+            "role": "user",
+            "content": f'{example}是 {class_list} 里的什么类别？'
+        })
+        pre_history.append({
+            "role": "assistant",
+            "content": _type
+        })
+    return {'class_list': class_list, 'pre_history': pre_history}
+
+
+# 模板训练
+def inference(sentences, custom_settings):
+    for sentence in sentences:
+        with console.status("[bold bright_red] Model Interence..."):
+            sentence_with_prompt = f"{sentence} 是 {custom_settings['class_list']} 里面的什么类型？"
+            response, history = model.chat(tokenizer, sentence_with_prompt, history=custom_settings['pre_history'])
+            print(f' ====== [bold bright_red] sentence: {sentence}')
+            print(f' ====== [bold bright_blue] inference answer: {response}')
+
+
+if __name__ == '__main__':
+    console = Console()
+    device = 'cpu'
+    # 加载分词器 (tokenizer)
+    # 参数一 => 分词器类型的路径
+    # 参数二 => 是否信任远程代码
+    tokenizer = AutoTokenizer.from_pretrained(r"/home/UserXC/xiancheng/test/ChatGLM3/hub/models--zai-org--chatglm3-6b/snapshots/e9e0406d062cdb887444fe5bd546833920abd4ac",
+                                              trust_remote_code=True,
+                                              revision='')
+    model = AutoModel.from_pretrained(r"/home/UserXC/xiancheng/test/ChatGLM3/hub/models--zai-org--chatglm3-6b/snapshots/e9e0406d062cdb887444fe5bd546833920abd4ac",
+                                              trust_remote_code=True,
+                                              revision='').float()
+
+    model.to(device)
+
+    # 模型待训练的数据
+    sentences = [
+        "今日，央行发布公告宣布降低利率，以刺激经济增长。这一降息举措将影响贷款利率，并在未来几个季度内对金融市场产生影响。",
+        "ABC公司今日发布公告称，已成功完成对XYZ公司股权的收购交易。本次交易是ABC公司在扩大业务范围、加强市场竞争力方面的重要举措。据"
+        "公司在行业中的地位，并为未来业务发展提供更广阔的发展空间。详情请见公司官方网站公告栏",
+        "公司资产负债表显示，公司偿债能力强劲，现金流充足，为未来投资和扩张提供了坚实的财务基础。", "最新的分析报告指出，可再生能源行"
+        ]
+    
+    custom_settings = init_prompts()
+    inference(sentences, custom_settings)
+~~~
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
