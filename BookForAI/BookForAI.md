@@ -6,17 +6,17 @@ L = \frac{1}{2}\sum |e_{i}|^{2} \ \ \ \ \ 损失函数
 $$
 然后将损失函数带入方程即可如图所示，损失函数 $L$ 转换成为一个有关 变量 $b$ 的函数。
 
-![image-20251202172659424](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251202172659424.png)
+![image-20251202172659424](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251202172659424.png)
 
 ​	为了求出b，我们可以绘制出二次函数的图像。假设我们给定一个随机的b值，可以通过求出当前的斜率再乘于一个常数$ \epsilon $ 然后然让b更新为 b减去这个$\epsilon \times b$ 这样就可以更新b的值，让b距离极值越来越近，从而达到最优值。这就是<b style="color:red">梯度下降算法</b>
 
-![image-20251203000217625](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203000217625.png)
+![image-20251203000217625](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203000217625.png)
 
 > **梯度**：<u>多变量函数在某一点的变化率方向，指向函数值增加最快的方向</u>
 
 ​	以一个更一般的例子来说明这个算法，更多的数据点以及非线性函数，其中需要优化的参数是$ \theta $， 第 $i$ 个样本点的损失函数可以写成 $L(f(x_i,\theta),y_i)$。首先可以求出损失函数 $L$ 关于参数 $\theta$ 的梯度值也就是求偏导然后求均值，参数 $\theta$ 沿着梯度的负方向移动就可以让损失函数更小，其中的常数 $\epsilon$ 也被称为学习率，用来控制梯度下降的步长。
 
-![image-20251203000810332](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203000810332.png)
+![image-20251203000810332](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203000810332.png)
 
 ​	按照上述的算法来计算，则需要首先计算出所有样本的损失函数梯度(<u>每一个点都有自己的梯度</u>)，然后求出均值来更新参数这就会产生如下问题：
 
@@ -25,13 +25,13 @@ $$
 
 因此为了解决上述存在的问题，只需要每次<u>**随机从n个样本中选择m个样本且每次都不重复**</u>，这样就可以解决存在的问题。这种改进方法被称为<b style="color:red">随机梯度下降</b>。
 
-![image-20251203001401908](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203001401908.png)
+![image-20251203001401908](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203001401908.png)
 
 ​	随机梯度下降并非每次都是有效的，深度学习网络训练往往是一个非凸的优化过程，在参数空间里面分布着各种山脊和山谷，假设每次更新的时候，参数更新在山谷两侧来回震荡，难以收敛到最佳的位置。
 
 ​	为了解决上述问题，想到在参数进行运动的时候添加阻尼，让移动更加平滑从而达到山谷。因此我们在进行参数更新的时候不仅需要计算新的梯度方向还要保留部分上一次梯度运动的方向，将两个方向的向量合并成为本次更新方向。将保留的历史梯度称为动量，这就是<b style="color:red">动量随机梯度下降</b>。
 
-![image-20251203101729951](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203101729951.png)
+![image-20251203101729951](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203101729951.png)
 
 ​	使用数学公式来表达动量随机梯度下降如下所示，使用 $v$ 表示动量，$a$ 表示保留动量的程度，参数 $\theta$ 更新为 $\theta + v$
 $$
@@ -41,7 +41,7 @@ v \leftarrow av - \epsilon g  \ \ \ a控制动量\\
 $$
 ​	在讨论到学习率，为了让参数更新能够变得更快，一般会设置比较大的学习率，随着训练过程为了找到最优的数值，就不能盲目追求速度，需要降低学习率找到最优值。因此需要设定一个初始值，然后每隔一段时间就降低学习率。这种办法通过人为控制是非常粗糙的。
 
-![image-20251203102552391](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203102552391.png)
+![image-20251203102552391](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203102552391.png)
 
 ​	为了让学习率能够自主下降，引入一个新的参数 $r$ , $r$ 就是梯度大小随时间的积累量，可以观察到将参数 $r$ 放在学习率的分母上如果：
 
@@ -52,7 +52,7 @@ $$
 
 ​	AdaGrad算法使得参数r的变化只和梯度有关，可能让学习率过早的变小而不好控制，因此提出<b style="color:red">RMSProp算法</b>，在 r 更新的公式中加入了可以手动调节的 $\rho$ 来控制优化过程
 
-![image-20251203103848267](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203103848267.png)
+![image-20251203103848267](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203103848267.png)
 
 ​	在改进随机梯度下降的过程中引入了 **动量和自动调节的学习率** ，<b style="color:red">Adam算法</b>将二者同时引入。在Adam算法中定义到：
 
@@ -61,7 +61,7 @@ $$
 + 修正两个参数，让两个参数在训练之初比较大帮助算法快速收敛
 + 最终参数的学习率就是 $\theta \leftarrow \theta - \frac{\epsilon \hat{s}}{\sqrt{\hat{r}+\delta}}g$
 
-![image-20251203104445490](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203104445490.png)
+![image-20251203104445490](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203104445490.png)
 
 > **梯度下降算法总结**
 >
@@ -86,7 +86,7 @@ $$
 + 损失函数L 为 0.18
 + 真实y 为 0.8
 
-![image-20251203105010014](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203105010014.png)
+![image-20251203105010014](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203105010014.png)
 
 根据梯度下降算法，我们需要计算损失函数 L 对于参数 w 和 b 的梯度值(偏导数)，然后按照梯度的反方向更新两个参数即可。
 $$
@@ -95,13 +95,13 @@ $$
 $$
 ​	为了更容易的计算偏导数，可以先求出偏导 $\frac{\partial L}{\partial y}$ 然后再计算 偏导 $\frac{\partial y}{\partial w}$ ，两个偏导相乘，这就是求导的链式法则。同理对 b 的计算也是如此。
 
-![image-20251203112524862](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203112524862.png)
+![image-20251203112524862](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203112524862.png)
 
 ​	这种沿着黄色箭头从后先前计算参数梯度值的方法就是<b style="color:red">反向传播算法</b>。现在增加难度，假设现在存在两次线性变换，则如图所示可以反向传播计算。黄色部分就是上次计算的值不需要重复计算。所以可以理解为<u>反向传播 算法就是神经网络中加速计算参数梯度值的方法</u>。
 
-![image-20251203112859402](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203112859402.png)
+![image-20251203112859402](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203112859402.png)
 
-​	但是在计算机中，计算是一个更加模块化的过程，计算机将计算处理为每一个过程都更加统一化，计算的格式是相当的只有计算的变量不同。这种由单元运算和变量构成的计算流程图也被称为**计算图**。不过下述显示的是计算图的正向传播过程。![image-20251203113113610](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203113113610.png)
+​	但是在计算机中，计算是一个更加模块化的过程，计算机将计算处理为每一个过程都更加统一化，计算的格式是相当的只有计算的变量不同。这种由单元运算和变量构成的计算流程图也被称为**计算图**。不过下述显示的是计算图的正向传播过程。![image-20251203113113610](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203113113610.png)
 
 现在通过计算图反向求出损失函数对于每一个参数的梯度表达式。
 
@@ -114,18 +114,18 @@ $$
 
    由此简便了计算。
 
-![image-20251203114028709](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203114028709.png)
+![image-20251203114028709](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203114028709.png)
 
 同样的道理可以计算出L对于所有参数的计算表达式
 
 + 式子中黄色的量：通过之前步骤得到的。
 + 式子中绿色的量：向前传播中求得的量。
 
-![image-20251203114415543](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203114415543.png)
+![image-20251203114415543](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203114415543.png)
 
 ​	在深度学习的框架里，计算图中的元素的定义和使用也是非常便捷的比如乘法运算在torch框架中可以写成如下所示。其中前向传播函数为$forward$ ，反向传播函数为$backward$，参数 grad_z就是损失函数L对z的偏导。在深度学习框架中，所有的单元运算都有定义的向前传播和反向传播函数，这样就可以使用反向传播算法来更新数以亿计的网络参数了。
 
-![image-20251203114604329](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203114604329.png)
+![image-20251203114604329](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203114604329.png)
 
 > **反向传播算法总结**
 >
@@ -141,11 +141,11 @@ $$
 
 **情形**：给定一个线性变换，可以将参数 $x$ 的值映射到一条直线上，输出结果就是函数 $y_1 = w_1 x + b_1$ 如果 $y_1$ 再经过一个线性变换得到 $y_2$ 那么 参数 $x$ 和 $y_2$ 也是一条直线的关系。
 
-![image-20251203203057125](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203203057125.png)
+![image-20251203203057125](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203203057125.png)
 
 ​	也就是说无论使用多少线性变换或者叠加为神经网络最终都只能解决线性问题。
 
-![image-20251203203115976](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203203115976.png)
+![image-20251203203115976](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203203115976.png)
 
 为了解决非线性问题，需要使用非线性函数 $f$ 当作从输入到输出的激活过程因此被称为<b style="color:red">激活函数</b>。因此激活函数性质如下：
 
@@ -156,7 +156,7 @@ $$
 
 第一个常见的激活函数<b style="color:red">sigmoid函数</b>。公式如图所示。
 
-![image-20251203203814763](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203203814763.png)
+![image-20251203203814763](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203203814763.png)
 
 我们可以对sigmoid求导之后的函数进行研究，最大值是 $0.25$ 。
 
@@ -164,29 +164,29 @@ $$
 + 无论如何取值，导数的最大值是0.25。这就意味着每一层反向传播时，梯度会被动缩小大约$\frac{1}{4}$，如果网络层数很多，或者出现极端的输出就会导致前几层的梯度几乎为0，参数不会被更新，这就是**梯度消失**。
 + 函数的取值是始终大于 0 的，被称为**非零均值函数**。
 
-![image-20251203204257353](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203204257353.png)
+![image-20251203204257353](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203204257353.png)
 
 如果考虑一个函数的输入是参数 $x_1,x_2$，它们是上一层sigmoid函数的输出所以都是大于 0 的数，进行反向传播后得到 $w_1,w_2$的梯度，其中黄色标注的式子始终大于0，因此这两个参数的梯度正负完全取决于损失函数对 $o$ 的偏导，这就意味着 $w_1,w_2$的梯度符号始终一致，被强制同时正向或反向更新，从而导致收敛速度变慢。
 
-![image-20251203204732749](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203204732749.png)
+![image-20251203204732749](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203204732749.png)
 
 为了解决上述问题，讨论第二个常见激活函数<b style="color:red">tanh函数</b>。
 
-![image-20251203204843957](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203204843957.png)
+![image-20251203204843957](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203204843957.png)
 
 + 是零均值函数，性能比sigmoid函数略优。
 + 依旧是饱和函数，存在梯度消失。
 
 为了解决梯度消失问题，讨论第三个常见激活函数<b style="color:red">ReLU函数</b>。
 
-![image-20251203205132529](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203205132529.png)
+![image-20251203205132529](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203205132529.png)
 
 ReLU函数在训练中可以动态控制神经元状态，要么激活大于0，要么等于0被抑制，把这种性质称为稀疏性。稀疏性在实际应用中发挥着至关重要的作用：
 
 + 输入参数发生小幅度变动，只有少部分神经元需要改变状态，这就使得信息的耦合程度降低。
 + 动态 开启/关闭 神经元可以支持不同输入维度和中间层维度的特征学习
 
-![image-20251203205405531](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203205405531.png)
+![image-20251203205405531](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203205405531.png)
 
 + 依旧是非零均值函数，可以使用归一化解决。
 + 函数输出没有上界，梯度累积超过上限，导致**梯度爆炸**。这需要参数初始化和重新设计网络结构来解决。
@@ -196,11 +196,11 @@ ReLU函数在训练中可以动态控制神经元状态，要么激活大于0，
 
 Leaky ReLU函数通过保留一点点输出来防止神经元坏死
 
-![image-20251203210416199](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203210416199.png)
+![image-20251203210416199](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203210416199.png)
 
 Parametric ReLU函数通过训练过程来调整参数 $a$ 来控制稀疏性或抑制神经元
 
-![image-20251203210420133](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203210420133.png)
+![image-20251203210420133](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203210420133.png)
 
 > **激活函数总结**
 >
@@ -217,7 +217,7 @@ Parametric ReLU函数通过训练过程来调整参数 $a$ 来控制稀疏性或
 
 情形：给定一个神经元，存在三个输入 $x_1,x_2,x_3$ 线性方程输出的 $y$ 值就等于 $w_1 x_1 + w_2 x_2+ w_3 x_3(此处忽略讨论b)$，那么开始训练神经网络之前该如何选择w的值呢？
 
-![image-20251203211826208](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203211826208.png)
+![image-20251203211826208](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203211826208.png)
 
 如果让 $w_i$全部为0，那么如果当前神经网络的神经元不仅一个神经元，而是由两个神经元构成，里面参数$w_1和w_2$向量的值都是零，根据反向传播：
 
@@ -226,13 +226,13 @@ Parametric ReLU函数通过训练过程来调整参数 $a$ 来控制稀疏性或
 
 从而导致该层的两个神经元的状态会始终保持一致，无法学习和表达更复杂的特征，称为<b style="color:red">对称现象</b>。
 
-![image-20251203212136217](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251203212136217.png)
+![image-20251203212136217](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251203212136217.png)
 
 为了防止对称现象的出现，需要再参数初始化的时候增加一些随机性，例如在均值为0，方差为1的正态分布中采样w的值，假设$x_1,x_2,x_3$的值是1，y就变成了$w_1 + w_2 + w_3$，因为3个参数都是独立同分布，所以y的方差就是这三个参数 $x$的方差之和等于3，所以y的标准差就是 $\sqrt{3}$ ，假设有n个参数，那么标准差很大，梯度爆炸。如果使用tanh函数又会因为y无穷大小导致梯度消失。
 
 ​	为了让神经网络训练，需要让y的方差落在一个可控的范围内。例如让y的方差等于1，这样求出参数w的分布方差就是$\frac{1}{n}$，假设不仅考虑输入的维度还考虑下一层神经元的数量，那么平均后的方差就是 $\frac{2}{n_{in} + n_{out}}$。<b style="color:red">Xavier初始化方法</b>如图所示。
 
-![image-20251204235628314](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251204235628314.png)
+![image-20251204235628314](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251204235628314.png)
 
 
 
@@ -261,7 +261,7 @@ Parametric ReLU函数通过训练过程来调整参数 $a$ 来控制稀疏性或
 
 ​	海量的文本数据，比如网页，文档，PDF等等，首先需要对这些文本进行分词，每一个词语就是一个token，对所有的词元去重就得到一个庞大的词典，对词元进行编号，就可以得到一个词元映射到ID的匹配表，将方向对调就可以得到一个ID映射到词元的匹配表。
 
-![image-20251211142630128](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211142630128.png)
+![image-20251211142630128](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211142630128.png)
 
 假设模型每次允许<u>最多输入3个Token</u>，那么：
 
@@ -288,13 +288,13 @@ Parametric ReLU函数通过训练过程来调整参数 $a$ 来控制稀疏性或
 
 + 模型的主要架构
 
-![image-20251211160329874](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211160329874.png)
+![image-20251211160329874](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211160329874.png)
 
 **如何进行词嵌入**
 
 ​	为了将词汇转换为可以计算的数值向量，我们需要词汇表，还有一个随机初始化的向量矩阵，向量矩阵的行数等于词汇表的数量，列数表示词元的维度。
 
-![image-20251211160804280](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211160804280.png)
+![image-20251211160804280](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211160804280.png)
 
 ​	根据 $词汇表(获取ID)\ \to\ 向量矩阵(获取向量) \ \to \ 词嵌入向量$ ，获取到词元向量之后还需要加上位置向量才能作为最终的嵌入向量。
 
@@ -304,14 +304,14 @@ Parametric ReLU函数通过训练过程来调整参数 $a$ 来控制稀疏性或
 
 1. <b style="color:red">训练法</b>：和计算词元向量的方式一致，设定一个位置向量矩阵，矩阵的行数等于上下文长度，也就是上下文的每一个位置都对应一个随机初始化的向量，列数必须等于词元嵌入的维度，后续将位置向量也当作参数一起更新。（如GPT2）
 2. <b style="color:red">公式法</b>：使用公式计算出每一个位置的向量表示，如Transformer论文中公式如下图所示。
-   ![image-20251211162534837](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211162534837.png)
+   ![image-20251211162534837](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211162534837.png)
 
 此外，位置嵌入还分为如下两种方式：
 
 1. <b style="color:red">绝对位置</b>
 2. <b style="color:red">相对位置</b>：现在使用更多
 
-![image-20251211163350364](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211163350364.png)
+![image-20251211163350364](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211163350364.png)
 
 **如何找到词元向量**
 
@@ -320,41 +320,41 @@ Parametric ReLU函数通过训练过程来调整参数 $a$ 来控制稀疏性或
 1. 根据词元ID将词元转化为one-hot编码。
 2. 使用one-hot编码乘于词元矩阵就获得词元向量
 
-![image-20251211164015305](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211164015305.png)
+![image-20251211164015305](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211164015305.png)
 
 **如何计算注意力**
 
 ​	将涵盖3个词向量的一句话输入到Transformer层，输出依旧是3个向量。此时输出的向量是包含了其他词语的注意力信息，所谓注意到其他向量的信息其实就是**新向量是根据其他向量计算得来**。
 
-![image-20251211164546052](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211164546052.png)
+![image-20251211164546052](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211164546052.png)
 
 ​	那么注意力得分如何计算呢？以第二个Token为例，分别与所有的Token进行向量点积运算 (在向量中点积计算结果越大，说明两个向量的相似程度越高，也代表这个Token注意力权重越高) 一般加权求和需要先归一化，让全部权重加起来等于1（通常使用Softmax公式进行归一化处理）。
 
-![image-20251211170051265](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211170051265.png)
+![image-20251211170051265](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211170051265.png)
 
 ​	但是，实际计算注意力的时候，不是分别与其他所有的Token计算注意力，不能让模型提前看到后面的答案，所以在进行归一化之前，要将当前Token之后的点积结果全部改为负无穷大。（<b style="color:red">掩码机制</b>）
 
-![image-20251211170632369](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211170632369.png)
+![image-20251211170632369](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211170632369.png)
 
-![image-20251211170704195](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211170704195.png)
+![image-20251211170704195](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211170704195.png)
 
 ​	可以看到一个Token会作为三个任务对象，因此就会被拆分为著名的$W_K、W_Q、W_V$矩阵。
 
-![image-20251211171954003](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211171954003.png)
+![image-20251211171954003](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211171954003.png)
 
-![image-20251211173636471](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211173636471.png)
+![image-20251211173636471](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211173636471.png)
 
 具体的对应转换如图所示。
 
-![image-20251211184633772](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211184633772.png)
+![image-20251211184633772](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211184633772.png)
 
 具体的计算过程如图所示。
 
-![image-20251211184856598](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211184856598.png)
+![image-20251211184856598](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211184856598.png)
 
 其中Q矩阵和K矩阵进行计算的时候，矩阵中的某些数值的标准差会变大（方差同理），从而导致归一化之后注意力分布极不均匀甚至出现大部分注意力权重为0，因此还需要 除以$\sqrt{k_{dim}}$
 
-![image-20251211185201253](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251211185201253.png)
+![image-20251211185201253](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251211185201253.png)
 
 ### <b style="color:blue">3. 嵌入过程（文本说明）</b>
 
@@ -422,7 +422,7 @@ $$
 
  <h4 style="color:purple">1.多头注意力</h4>
 
-![image-20251214152334591](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251214152334591.png)
+![image-20251214152334591](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251214152334591.png)
 
 例子：针对 “小猫在沙发上<u>**玩耍**</u>” 这句话，对于 “**玩耍**” 这个词，模型会派出多个注意力镜头去扫描上下文。
 
@@ -441,7 +441,7 @@ $$
 
  <h4 style="color:purple">2.如何实现多头注意</h4>
 
-![image-20251214153135003](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251214153135003.png)
+![image-20251214153135003](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251214153135003.png)
 
 ​	假设需要实现 3 头注意力，需要将输入矩阵兵分 3 路 同时计算3个注意力，3条路都是独立的：
 
@@ -461,7 +461,7 @@ $$
 
  <h4 style="color:purple">3.FFN前馈神经网络</h4>
 
-![image-20251214153736705](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251214153736705.png)
+![image-20251214153736705](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251214153736705.png)
 
 ​	获得多头注意力结果之后需要将这个结果输入到一个小型前馈神经网络中(FFN)，FFN层由两个紧密的全连接层组成：
 
@@ -485,17 +485,17 @@ $$
 
 ​	此时TransFormer层就成型了。由于输入和输出维度不变，就可以实现多个Transformer层的计算，实现逐层提取文本特征。
 
-![image-20251214154157311](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251214154157311.png)
+![image-20251214154157311](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251214154157311.png)
 
 <hr>
 
 ​	在深度学习之前，大部分机器学习算法都是直接构建特征 $\to$ 目标 的映射关系。（特征和目标之间的关系是直接的、清晰的）。
 
-![image-20251214154506144](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251214154506144.png)
+![image-20251214154506144](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251214154506144.png)
 
 ​	但真实世界中特征到目标之间往往有很多隐晦的间接的联系，这种联系就可以由深度学习一层一层来捕捉。
 
-![image-20251214154617892](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251214154617892.png)
+![image-20251214154617892](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251214154617892.png)
 
 |      |         图像识别模型         |        语言模型        |
 | :--: | :--------------------------: | :--------------------: |
@@ -503,7 +503,7 @@ $$
 | 中层 |   负责将细节组装为局部特征   |    相邻词之间的关系    |
 | 深层 | 负责将局部特征拼装为整体画面 |     句子的完整含义     |
 
-![image-20251214155405457](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251214155405457.png)
+![image-20251214155405457](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251214155405457.png)
 
 
 
@@ -516,7 +516,7 @@ $$
 + 训练的时候每一层的输入分布在训练过程中不断变化，导致训练不稳定、收敛慢。
 + 解决方法：归一化
 
-![image-20251214161210601](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251214161210601.png)
+![image-20251214161210601](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251214161210601.png)
 
 ​	对于每一层的输出矩阵，求出每一行的均值和标准差，然后没每一个数值都减去均值除以标准差，这样就能将数据调整为均值为0方差为1分布。这样输入就稳定了，反向传播的梯度也就更加可控。归一化之后数值的相对大小不变，因此原来的信息得以保存不影响模型训练。
 
@@ -527,7 +527,7 @@ $$
 
 + 解决方法：残差链接
 
-![image-20251214161440563](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251214161440563.png)
+![image-20251214161440563](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251214161440563.png)
 
 ​	针对反向传播路径太长，可以将前一层的输入和输出一起送入到下一层，这可以使每一层和最后一层都有联系
 
@@ -547,7 +547,7 @@ $$
 
 大模型的复杂度主要来自：“层数多”、“神经元多”，Dropout是从神经元入手降低模型复杂度
 
-![image-20251214162407754](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251214162407754.png)
+![image-20251214162407754](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251214162407754.png)
 
 ​	每一次随机丢弃神经元就避免神经元一家独大。所有神经元的能就得到平衡，最终的输出就不会只依赖于某个神经元，而是靠整体神经网络的决策，增强模型的泛化能力。三个细节需要注意：
 
@@ -568,7 +568,7 @@ $$
 
  <h4 style="color:purple">1.损失值计算</h4>
 
-![image-20251215111625080](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251215111625080.png)
+![image-20251215111625080](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251215111625080.png)
 
 **计算损失值步骤如下**
 
@@ -578,7 +578,7 @@ $$
 4. 模型输出的概率分布表中，把 $-log(正确词的概率)$，作为当前的损失：<b style="color:red;">比如第二个词正确答案是地虎，然后模型输出的预测分布表中给 地虎 的概率是0.42，那么这次损失就是 -log(0.42)</b>
 5. 损失加起来求均值就是本次的损失值。
 
-![image-20251215113251585](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251215113251585.png)
+![image-20251215113251585](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251215113251585.png)
 
 1. **Transformer 主干网络**（多层attention + FFN）
 
@@ -616,7 +616,7 @@ $$
 + 因此可以按概率来抽样，这样每一个词都有机会被选中，保持当前最好词依旧最大概率被抽中，其他词也有自己的概率被抽中。这样就兼顾了多样性和准确性。
 + 如果想进一步增加模型输出的多样性，可以对logits除以一个大于1的数（称为tempreture），这样子softmax之后的分布也会更均匀
 
-![image-20251215161845807](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251215161845807.png)
+![image-20251215161845807](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251215161845807.png)
 
 但是上述的做法还是有些不足，某些词的概率实在太小，没必要进入选择的范围，可以有如下解决方法：
 
@@ -628,7 +628,7 @@ $$
 
 ### <b style="color:blue">7. 参数计算图</b>
 
-![image-20251215162749778](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251215162749778.png)
+![image-20251215162749778](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251215162749778.png)
 
 
 
@@ -692,7 +692,7 @@ $$
    >
    > ollama server					       # 启动ollama服务(也可以选择再后台启动)
 
-   ![image-20251208151839401](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251208151839401.png)
+   ![image-20251208151839401](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251208151839401.png)
 
 2. 配置环境变量（如果下载到window上就需要配置环境变量，让虚拟机能够访问到window上的ollama）
 
@@ -713,7 +713,7 @@ $$
 
    > ollama run deepseek-r1:1.5b			# 下载模型
 
-   ![image-20251208151759078](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251208151759078.png)
+   ![image-20251208151759078](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251208151759078.png)
 
 4. 下载RAGFlow源代码
 
@@ -724,11 +724,11 @@ $$
    >
    > 可以选择是否需要使用RAGFlow中的embedding模型
    >
-   > ![image-20251208155627552](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251208155627552.png)
+   > ![image-20251208155627552](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251208155627552.png)
    >
    > 打开.env文件将slim注释掉，使用RAGFlow自带的Embedding模型。
    >
-   > ![image-20251208160410106](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251208160410106.png)
+   > ![image-20251208160410106](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251208160410106.png)
    >
    > 在RAGFlow文件夹中使用docker安装RAGFlow的镜像文件
    >
@@ -736,13 +736,13 @@ $$
    > > docker compose -f docker-compose.yml up -d
    > > ```
    >
-   > ![image-20251208160701585](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251208160701585.png)
+   > ![image-20251208160701585](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251208160701585.png)
    >
    > 因为RAGFlow镜像默认在80端口运行，所以直接打开网址验证即可
    >
-   > ![image-20251208160747928](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251208160747928.png)
+   > ![image-20251208160747928](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251208160747928.png)
    >
-   > ![image-20251208160950300](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251208160950300.png)
+   > ![image-20251208160950300](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251208160950300.png)
 
 5. 下载Docker
 
@@ -843,7 +843,7 @@ $$
 >+ LoRA核心：如何让 $W_0 = BA$，并且 BA 存储的数据量远远小于 $\Delta{W_0}$? ——矩阵的低秩分解
 >+ 在线性代数中，定理：{100 x 100} = {100 x 2} x {2 x 100}
 >
->![image-20251209105743621](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209105743621.png)
+>![image-20251209105743621](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251209105743621.png)
 >
 >+ <b style="color:red">通过该方式，微调参数量从 $100 * 100$ 显著下降到 $2 * 100 * 2$</b>
 
@@ -907,7 +907,7 @@ $$
   pip install -e ".[torch,metrics]"
   ~~~
 
-![image-20251209111446667](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209111446667.png)
+![image-20251209111446667](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251209111446667.png)
 
 + 检验是否安装成功
 
@@ -921,7 +921,7 @@ $$
 llamafactory-cli webui
 ~~~
 
-![image-20251209143344811](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209143344811.png)
+![image-20251209143344811](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251209143344811.png)
 
 <h3>5. 配置端⼝转发</h3>
 
@@ -985,9 +985,9 @@ llamafactory-cli webui
 
 + 注意：这⾥的路径是模型⽂件夹内部的模型特定快照的唯⼀哈希值，⽽不是整个模型⽂件夹
 
-![image-20251209150520451](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209150520451.png)
+![image-20251209150520451](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251209150520451.png)
 
-![image-20251209150651555](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209150651555.png)
+![image-20251209150651555](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251209150651555.png)
 
 
 
@@ -995,7 +995,7 @@ llamafactory-cli webui
 
 + **`README_zh`** 中详细介绍了如何配置和描述你的⾃定义数据集（在Llama-Factory/data文件夹中）
 
-![image-20251209150954519](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209150954519.png)
+![image-20251209150954519](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251209150954519.png)
 
 + 按照格式准备⽤于微调的数据集 **`magic_conch.json`**，数据示例：
 
@@ -1018,7 +1018,7 @@ llamafactory-cli webui
 ]
 ~~~
 
-![image-20251209151612837](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209151612837.png)
+![image-20251209151612837](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251209151612837.png)
 
 + 修改 **`dataset_info.json`** ⽂件，添加如下配置：
 
@@ -1028,11 +1028,11 @@ llamafactory-cli webui
 },
 ~~~
 
-![image-20251209151723796](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209151723796.png)
+![image-20251209151723796](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251209151723796.png)
 
 + 将数据集 `magic_conch.json` 放到 `LLama-Factory` 的 `data` ⽬录 下
 
-![image-20251209152057012](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209152057012.png)
+![image-20251209152057012](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251209152057012.png)
 
 
 
@@ -1080,7 +1080,7 @@ llamafactory-cli webui
 
 + 在⻚⾯上配置导出路径，导出即
 
-![image-20251209152855427](E:\Download\20251202_NoteBook\BookForAI\assets\image-20251209152855427.png)
+![image-20251209152855427](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251209152855427.png)
 
 
 
