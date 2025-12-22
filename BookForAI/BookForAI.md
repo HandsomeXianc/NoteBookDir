@@ -1230,6 +1230,119 @@ if __name__ == '__main__':
 
 
 
+## PEFT参数高效微调
+
+![image-20251221221034069](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251221221034069.png)
+
+**上述是Transformer的宏观【左侧】/微观【右侧】示意图。**
+
+![微调方法](D:\Download\20251202_NoteBook\BookForAI\assets\微调方法.jpg)
+
++ **参数高效微调PEFT**：固定PLM（Pretrain Language model）的大部分参数，仅调整模型的一小部分参数来达到全部参数的微调接近的效果。
+
+![image-20251221222548080](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251221222548080.png)
+
++ **PEFT分类**
+
+  1. 增加额外参数
+
+     + 原理：<b style="color:blue">在原有的预训练模型中引入额外的可训练参数或模块</b>。
+
+     1. 类适配器（Adapter-like）
+     2. 软提示（Soft prompts）
+        + 原理：<b style="color:blue">在输入层或隐藏层中添加可学习的连续向量（提示词），不改变模型权重</b>。
+
+  2. 选取部分参数更新
+
+     + 原理：<b style="color:blue">不增加新参数，而是从模型原有的参数中挑选出一小部分进行微调，冻结其余部分</b>。
+
+  3. 引入重参数化
+
+     + 原理：<b style="color:blue">利用低秩分解等数学手段，将参数更新过程重新参数化为更小的矩阵运算</b>。
+
+
+
+
+
+### <b style="color:blue">1. BitFit</b>
+
++ **核心原理**：<b style="color:red">改变线性计算中的b不改变W</b>
+
+  在传统的神经网络中，线性层的运算通常表示为 $y = Wx + b$。
+
+  + $W$ 是权重矩阵，占据了模型绝大部分参数。
+  + $b$ 是偏置项，参数量微乎其微。
+
+  **BitFit **的操作非常简单： 在微调过程中，它会**冻结（Freeze）**模型中所有的权重矩阵 $W$，而只允许更新**偏置项 $b$** 以及最后的任务层参数。
+
++ **在 Transformer 中具体作用于哪些块？**
+
+  1. <b style="color:green">自注意力机制部分</b>
+
+     在计算 Q、K、V 时，输入向量会分别乘以三个矩阵
+
+     + $Q = xW_q + b_q$
+     + $K = xW_k + b_k$
+     + $V = xW_v + b_v$
+
+     **BitFit 就在这里起作用：** 它冻结 $W_q, W_k, W_v$，只更新 $b_q, b_k, b_v$。
+
+  2. <b style="color:green">注意力输出合并</b>
+
+     在多头注意力计算完后，会有一个线性层将结果映射回原来的维度
+
+     + $O = \text{AttentionResult} \cdot W_o + b_o$ **BitFit 同样只更新这里的 $b_o$。**
+
+  3. <b style="color:green">前馈神经网络</b>
+
+     Transformer 块中除了注意力机制，还有一个占据大量参数的 FFN 层，它由两个线性层组成
+
+     + 第一层：$h = \text{Activation}(xW_{up} + b_{up})$
+     + 第二层：$\text{Output} = hW_{down} + b_{down}$ 
+
+     **BitFit 只更新 $b_{up}$ 和 $b_{down}$。**
+
+  
+
+
+
+### <b style="color:blue">2. Prefix Tuning</b>
+
+![image-20251222004326860](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251222004326860.png)
+
++ **提示学习**：当时人们发现，如果直接给大模型一个任务（比如分类），模型可能表现一般；但如果把任务伪装成它在预训练时见过的“填空题”，模型的效果会大幅提升。
+
++ **问题原因**：
+
+  1. 离散模板极度敏感：人工设计模版稍微改动一个词（加词、减词或换位置）都会导致模型性能剧烈波动。
+  2. 离散模板优化困难：自动化搜索这些离散的词本高昂，且搜索出的结果往往不是数学上的最优解。
+     + 自动搜索方法：
+       1. 基于挖掘的方法 ：算法会扫描海量的语料库，发现语料库中经常出现 `“[输入] 真是 [输出]”` 这种结构，于是它就自动把 `“真是”` 确定为模板词。
+       2. 迭代搜索/置换：先给一个初始模板，然后让算法不断更换其中的单词。每换一个词，就让模型在测试集上跑一遍。如果准确率上升了，就保留这个词；如果下降了，就换回原来的词。
+       3. 使用另一个模型来生成：生成出来后，再通过实际测试筛选出分数最高的那一个。
+
++ **核心原理**：<b style="color:red">在模型的每一层输入前添加一串可训练的特定向量参数</b>
+
+  不使用硬模板，模板词不再是人类能够读懂的词，而是连续的可微的向量，并且直接通过反向传播算法进行优化，从而找到比离散搜索更好的性能点。
+
+
+
+
+
+### <b style="color:blue">3. Prompt Tuning</b>
+
+![image-20251222134916482](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251222134916482.png)
+
+|                         传统模型微调                         |                        Prompt Tuning                         |
+| :----------------------------------------------------------: | :----------------------------------------------------------: |
+| 对于每一个特定的任务【A、B、C】都需要基于原始预训练模型进行全量微调 |      核心的预训练模型始终保持冻结，完全不改动其内部参数      |
+|                  最终得到三个完全独立的模型                  |  每个任务只训练一个极其微小的 **Task Prompt**，存储成本极低  |
+| 推理阶段，不能在一个 Batch里同时处理不同任务的数据，因为每个任务对应的模型权重是不一样的 | 主模型通用，能在同一个推理 Batch 中混合不同任务的数据【如 A、B、C 】。只需在每个样本前拼接对应任务的 20K 参数 Prompt，模型就能同时处理多种任务，极大地提高了服务器的吞吐量。 |
+
++ **核心原理**：<b style="color:red">仅仅在模型的输入层添加一串可训练的特定向量参数</b>
+
++ 相比Prefix Tuning，注入深度比较浅，因为Prefix Tuning是每一层都注入向量，Prompt Tuning只在输入层注入向量。
++ 该方法可以看作是Prefix Tuning的简化版本，它给每个任务定义了自己的Prompt，然后拼接到数据上作为输入，但**只在输入层加入prompt tokens**
 
 
 
@@ -1237,6 +1350,55 @@ if __name__ == '__main__':
 
 
 
+### <b style="color:blue">4. P-Tuning</b>
+
++ **核心原理**：<b style="color:red">针对Prompt Tuning是随机初始化一组向量，P-Tuning认为软向量如果随机初始化会导致训练不稳定，因为模型很难在没有关联的情况下学习这些纯数字，因此引入Prompt Encoder</b>
+  + **Prompt Encoder**：P-Tuning 引入了一个额外的组件（通常是一个双向 LSTM 神经网络或一个简单的 MLP）来**预测/生成**这些软向量。
+  + **连续性保证**：由于 LSTM 具有处理序列的能力，它能让生成的几个软向量之间在数学空间上产生“关联性”，从而模拟人类自然语言中词与词之间的联系。
++ **工作过程**：
+  1. **插入虚拟 Token**：在输入的 Embedding 层，插入若干个虚拟 Token，位置通常在输入的<b style="color:green">开头或中间</b>（如：`[Prompt_1] [Prompt_2] 我有一只猫 [Prompt_3]`）。
+  2. **通过 Encoder 转换**：这几个虚拟 Token 首先进入 **Prompt Encoder**，被转化为具有关联性的软向量。
+  3. **送入预训练模型 **：这些向量与原始输入的向量拼接，送入完全**冻结**的预训练模型中进行前向传播。
+  4. **反向传播更新**：误差回传时，只更新 Prompt Encoder 的参数。训练完成后，我们通常可以抛弃 Encoder，直接保存生成的那些软向量。
++ **主要作用**：
+  1. **解决训练不稳定性**：通过 LSTM 的建模，克服了 Prompt Tuning 在某些任务上难以收敛的问题。
+  2. **支持插入模式**：与 Prefix Tuning 只能加在开头不同，P-Tuning 的虚拟 Token 可以插在输入的**任何位置**（开头、中间、结尾），这让它在处理某些特定结构的填空任务（如逻辑判断）时非常灵活。】
+  3. **极大节省参数**：与 Prompt Tuning 一样，它只更新不到 0.01% 的参数，且支持多任务并行推理。
+  4. 同样只作用在输入层，和Prompt Tuning的深度一样。
+
+> 可简单看作是Prompt-Tuning的改进
 
 
 
+### <b style="color:blue">5. P-Tuning-V2</b>
+
+![image-20251222141248021](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251222141248021.png)
+
++ **核心原理**：<b style="color:red">将“软提示”从只在输入层插入，变为在模型的每一层都进行深度注入。</b>
+
++ P-Tuning-v1（以及传统的 Prompt Tuning）只在输入层拼接嵌入向量。P-Tuning-v2 借鉴了 **Prefix Tuning** 的思想，在 Transformer 的**每一层**都添加可学习的连续向量
++ P-Tuning-v1使用 LSTM 或 MLP 作为 Prompt Encoder 来关联虚拟 Token。但在v2中发现对于许多任务，直接训练这些向量（去掉复杂的 Encoder）反而效果更好，且能减少计算开销。
++ 传统 Prompt Tuning 依赖“模版+预测词（Verbalizer）”的映射。P-Tuning v2 回归了传统的分类头（Classification Head）模式，直接在 `[CLS]` 或特定 Token 上接线性层，这使其能处理更复杂的任务。
++ <b style="color:green">【v2】与【Prompt Tuning / v1 / Prefix Tuning】的分水岭</b>
+  + **Prompt Tuning / v1 / Prefix Tuning**主要还是带着“填空”的基因，通过“文字生成”的逻辑来解决问题。
+  + **P-Tuning v2**进化成了“插座”模式，不再纠结于填空，而是直接给模型安装任务插件（分类头）。
+
+> 可简单看作是Prefix-Tuning的改进
+
+
+
+
+
+### <b style="color:blue">6. Adapter Tuning</b>
+
+
+
+
+
+### <b style="color:blue">7. AdapterFusion</b>
+
+
+
+
+
+### <b style="color:blue">8. AdapterDrop</b>
