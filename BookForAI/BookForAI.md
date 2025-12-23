@@ -1565,3 +1565,59 @@ if __name__ == '__main__':
 
 
 
+
+
+
+
+### <b style="color:blue">12. MAM Adapter</b>
+
+![image-20251223150709372](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251223150709372.png)
+
++ **核心思想**：借鉴了Adapter、LoRA、Prefix Tuning的思想，将其三个有机融合。
+  + **Attention 内部**
+    + **LoRA**：红色虚线框显示 LoRA 作用于 $W_q$（查询）和 $W_k$（键）矩阵上。它通过旁路分支与原始权重相加。
+    + **Prefix Tuning**：蓝色虚线框 $P_k$ 和 $P_v$ 显示在 Attention 计算前插入了“虚拟 Token”。
+  + **Feed Forward 前后**
+    + **Adapter**：绿色虚线框显示了典型的串行 Adapter。它们分别被放置在 Attention 层之后和 FFN 层之后。
++ **表达思想**：不同的 PEFT 技术可以组合使用。
++ **结论**
+  1. 并行放置的Adapter优于顺序放置的Adapter，并且与 FFN 并行放置的Adapter优于多头注意力并行放置的Adapter。
+  2. 软提示可以通过仅更改 0.1% 的参数来有效地修改注意力。
+  3. 最终模型 MAM Adapter 是用 FFN 层的并行Adapter和软提示的组合。上图所示只是展示了MAM（mix-and-match）的思想。
+  4. **Attention 模块**最适合 **Prefix Tuning**，**FFN 模块**最适合 **Parallel Adapter (并行 Bottleneck)**
+
+
+
+
+
+
+
+### <b style="color:blue">13. UniPELT</b>
+
+![image-20251223153144788](D:\Download\20251202_NoteBook\BookForAI\assets\image-20251223153144788.png)
+
++ **核心原理**：MAM Adapter是在不同位置“混搭”技术，UniPELT技术试图在一个模型里**同时集成**多种 PEFT 技术，并让**模型自己决定**什么时候该用哪一种。
+
++ **核心设计**：门控机制
+
+  + **工作原理**：对于每一个微调模块分配一个介于 0 到 1 之间的“开关”参数 $G$。
+  + **自动选择**
+    + 如果 $G$ 趋近于 1，说明该模块对当前任务很重要，模型会重用它。
+    + 如果 $G$ 趋近于 0，说明该模块对当前任务没用，模型会自动将其“屏蔽”。
+  + **意义**：这实现了真正的**任务自适应**。模型会针对不同的下游任务，自动激活最适合的那种微调路径。
+
++ **模型集成内容**
+
+  UniPELT 在一个 Transformer Block 中同时塞进了三个组件
+
+  1. **LoRA**：并行作用于矩阵乘法，负责基础的权重修正。
+  2. **Prefix Tuning**：作用于 Attention 层，改变序列间的交互逻辑。
+  3. **Adapter**：作用于 FFN 之后，利用带有非线性激活的 Bottleneck 结构来捕捉复杂特征。
+
++ **UniPELT 与 MAM Adapter 的区别**
+
+|   **特性**   | **MAM Adapter**                                              | **UniPELT**                                      |
+| :----------: | ------------------------------------------------------------ | ------------------------------------------------ |
+| **设计理念** | **Mix-and-Match**：根据经验手工指定最优位置（如 FFN 用并行）。 | **All-in-One**：全部塞进去，靠门控开关自动筛选。 |
+|  **灵活性**  | 固定结构                                                     | **动态开关，高度自适应**                         |
+| **计算开销** | 较低                                                         | 略高（因为要同时训练多个模块和门控参数）         |
